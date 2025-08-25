@@ -6,18 +6,19 @@ const Projects = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchProjects = async () => {
-      try {
-        const { data } = await axios.get(`${process.env.REACT_APP_API_URL}/projects`);
-        console.log("API Response:", data);
-        setProjects(data.projects || []);
-      } catch (error) {
-        console.error("Error fetching projects:", error);
-        setProjects([]);
-      } finally {
-        setLoading(false);
-      }
-    };
+   const fetchProjects = async () => {
+  try {
+    const { data } = await axios.get(`${process.env.REACT_APP_API_URL}/projects`);
+    console.log("API Response:", data);
+    setProjects(data.projects || data || []);
+  } catch (error) {
+    console.error("Error fetching projects:", error);
+    setProjects([]);
+  } finally {
+    setLoading(false);
+  }
+};
+
     fetchProjects();
   }, []);
 
