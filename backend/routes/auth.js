@@ -32,29 +32,37 @@ router.post("/login", async (req, res) => {
   }
 });
 
-// TEMP: create admin if missing (delete after use)
-router.post("/seed-admin", async (req, res) => {
+// TEMP: force-promote & reset password for admin user
+router.post("/force-admin", async (req, res) => {
   try {
     const { username, password } = req.body; // e.g., admin / Admin@123
+    if (!username || !password) {
+      return res.status(400).json({ message: "username & password required" });
+    }
+
     const bcrypt = require("bcryptjs");
     let user = await User.findOne({ username });
 
-    if (user && user.isAdmin) {
-      return res.json({ ok: true, alreadyAdmin: true, id: user._id });
-    }
-
     if (!user) {
+      // create fresh admin
       const hash = await bcrypt.hash(password, 10);
       user = await User.create({ username, password: hash, isAdmin: true });
       return res.json({ ok: true, created: true, id: user._id });
     }
 
-    await User.updateOne({ _id: user._id }, { $set: { isAdmin: true, password: user.password } });
+    // promote existing + reset password
+    const hash = await bcrypt.hash(password, 10);
+    await User.updateOne(
+      { _id: user._id },
+      { $set: { isAdmin: true, password: hash } }
+    );
     return res.json({ ok: true, promoted: true, id: user._id });
   } catch (e) {
+    console.error(e);
     return res.status(500).json({ message: "Server error" });
   }
 });
+
 
 
 module.exports = router;
