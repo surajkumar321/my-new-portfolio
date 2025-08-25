@@ -1,112 +1,35 @@
-import React, { useState } from 'react';
-import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from "react";
+import axios from "axios";
 
-const LoginPage = ({ onLogin }) => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
+const API = process.env.REACT_APP_API_URL; // https://backend-7rl6.onrender.com/api
+
+export default function LoginPage({ onLogin }) {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [msg, setMsg] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    setLoading(true);
-
+    setMsg("");
     try {
-      const response = await axios.post(
-        `${process.env.REACT_APP_API_URL}/auth/login`,
-        { username, password }
-      );
-
-      if (response && response.data && response.data.token) {
-        // Save token in localStorage
-        localStorage.setItem('adminToken', response.data.token);
-
-        // Update App.js user state
-        const userData = {
-          name: username, // you can also use response.data.user.name if backend provides
-          token: response.data.token,
-          isAdmin: true, // backend login is for admin only
-        };
-        onLogin(userData);
-
-        // Redirect to homepage or admin dashboard
-        navigate('/admin');
-      } else {
-        setError('Login failed. No token received.');
-      }
+      const { data } = await axios.post(`${API}/auth/login`, { username, password });
+      localStorage.setItem("adminToken", data.token);
+      onLogin?.({ name: data.user.name, isAdmin: data.user.isAdmin, token: data.token });
+      setMsg("Admin login success ✅");
     } catch (err) {
-      console.error('Login error:', err);
-      if (err.response && err.response.data && err.response.data.message) {
-        setError(err.response.data.message);
-      } else if (err.message) {
-        setError(err.message);
-      } else {
-        setError('Something went wrong. Please try again.');
-      }
-    } finally {
-      setLoading(false);
+      setMsg(err?.response?.data?.message || "Login failed");
     }
   };
 
   return (
-    <div style={{ padding: '100px 10%', maxWidth: '500px', margin: 'auto' }}>
-      <h2 style={{ fontSize: '1.75rem', marginBottom: '1.5rem', textAlign: 'center' }}>Admin Login</h2>
-      <form onSubmit={handleSubmit} className="contact-form">
-        <div className="form-group" style={{ marginBottom: '1rem' }}>
-          <label htmlFor="username">Username</label>
-          <input
-            type="text"
-            id="username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required
-            disabled={loading}
-            style={{ width: '100%', padding: '0.5rem', borderRadius: '0.375rem', border: '1px solid #d1d5db' }}
-          />
-        </div>
-
-        <div className="form-group" style={{ marginBottom: '1rem' }}>
-          <label htmlFor="password">Password</label>
-          <input
-            type="password"
-            id="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            disabled={loading}
-            style={{ width: '100%', padding: '0.5rem', borderRadius: '0.375rem', border: '1px solid #d1d5db' }}
-          />
-        </div>
-
-        <button
-          type="submit"
-          className="submit-button"
-          disabled={loading}
-          style={{
-            width: '100%',
-            padding: '0.5rem 1rem',
-            backgroundColor: '#3b82f6',
-            color: '#fff',
-            borderRadius: '0.375rem',
-            fontWeight: '500',
-            cursor: 'pointer',
-            transition: 'background-color 0.2s',
-          }}
-        >
-          {loading ? 'Logging in...' : 'Login'}
-        </button>
-
-        {error && (
-          <p className="status-message error" style={{ color: '#ef4444', marginTop: '1rem', textAlign: 'center' }}>
-            {error}
-          </p>
-        )}
-      </form>
-    </div>
+    <form onSubmit={handleSubmit} className="p-4 max-w-sm mx-auto">
+      <h2 className="text-xl font-semibold mb-3">Admin Login</h2>
+      <input className="border p-2 w-full mb-2" placeholder="Admin username"
+        value={username} onChange={(e)=>setUsername(e.target.value)} />
+      <input className="border p-2 w-full mb-3" type="password" placeholder="Password"
+        value={password} onChange={(e)=>setPassword(e.target.value)} />
+      <button className="bg-blue-600 text-white px-3 py-2 rounded w-full">Login</button>
+      {msg && <p className="mt-2 text-sm">{msg}</p>}
+    </form>
   );
-};
-
-export default LoginPage;
+}
