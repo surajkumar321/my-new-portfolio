@@ -32,19 +32,29 @@ router.post("/login", async (req, res) => {
   }
 });
 
-// ✅ One-time route to create admin (delete later)
+// TEMP: create admin if missing (delete after use)
 router.post("/seed-admin", async (req, res) => {
   try {
-    const { username, password } = req.body;
+    const { username, password } = req.body; // e.g., admin / Admin@123
+    const bcrypt = require("bcryptjs");
     let user = await User.findOne({ username });
-    if (user) return res.json({ message: "Admin already exists" });
 
-    const hash = await bcrypt.hash(password, 10);
-    user = await User.create({ username, password: hash, isAdmin: true });
-    res.json({ ok: true, id: user._id });
-  } catch (err) {
-    res.status(500).json({ message: "Server error" });
+    if (user && user.isAdmin) {
+      return res.json({ ok: true, alreadyAdmin: true, id: user._id });
+    }
+
+    if (!user) {
+      const hash = await bcrypt.hash(password, 10);
+      user = await User.create({ username, password: hash, isAdmin: true });
+      return res.json({ ok: true, created: true, id: user._id });
+    }
+
+    await User.updateOne({ _id: user._id }, { $set: { isAdmin: true, password: user.password } });
+    return res.json({ ok: true, promoted: true, id: user._id });
+  } catch (e) {
+    return res.status(500).json({ message: "Server error" });
   }
 });
+
 
 module.exports = router;
