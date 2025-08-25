@@ -9,9 +9,11 @@ const Projects = () => {
     const fetchProjects = async () => {
       try {
         const { data } = await axios.get(`${process.env.REACT_APP_API_URL}/projects`);
-        setProjects(data);
+        console.log("API Response:", data);
+        setProjects(data.projects || []);
       } catch (error) {
         console.error("Error fetching projects:", error);
+        setProjects([]);
       } finally {
         setLoading(false);
       }
