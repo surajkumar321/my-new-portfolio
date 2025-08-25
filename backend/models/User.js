@@ -1,26 +1,13 @@
-const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
+// backend/models/User.js
+const mongoose = require("mongoose");
 
-const userSchema = new mongoose.Schema({
-  username: { type: String, required: true, unique: true, trim: true },
-  password: { type: String, required: true },
-  role: {
-    type: String,
-    enum: ['user', 'admin'], // only 2 roles allowed
-    default: 'user', // by default sab user hai
+const userSchema = new mongoose.Schema(
+  {
+    username: { type: String, required: true, unique: true },
+    password: { type: String, required: true },
+    isAdmin: { type: Boolean, default: false }, // ✅ only admins can login
   },
-});
+  { timestamps: true }
+);
 
-userSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) return next();
-  const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt);
-  next();
-});
-
-userSchema.methods.matchPassword = async function (enteredPassword) {
-  return await bcrypt.compare(enteredPassword, this.password);
-};
-
-const User = mongoose.model('User', userSchema);
-module.exports = User;
+module.exports = mongoose.model("User", userSchema);
